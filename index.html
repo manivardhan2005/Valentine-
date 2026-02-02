@@ -1,0 +1,102 @@
+
+script.js
+valentines-site
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const yesBtn = document.getElementById('yes-btn');
+    const noBtn = document.getElementById('no-btn');
+    const mainCard = document.getElementById('main-card');
+    const successMessage = document.getElementById('success-message');
+    const backgroundHearts = document.getElementById('background-hearts');
+    // Create floating background hearts
+    function createHearts() {
+        const heart = document.createElement('div');
+        heart.classList.add('floating-heart');
+        heart.innerHTML = '❤️';
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.animationDuration = Math.random() * 3 + 2 + 's';
+        heart.style.fontSize = Math.random() * 20 + 10 + 'px';
+        backgroundHearts.appendChild(heart);
+        setTimeout(() => {
+            heart.remove();
+        }, 5000);
+    }
+    // Start background animation
+    setInterval(createHearts, 300);
+    // Evasion for "No" button
+    function moveBtn(e) {
+        // CRITICAL FIX: Move the button to the <body> so its position is relative to the viewport,
+        // not the card container (which has perspective/transforms that mess up coordinates).
+        if (noBtn.parentNode !== document.body) {
+            document.body.appendChild(noBtn);
+        }
+        noBtn.style.position = 'fixed';
+        noBtn.style.zIndex = '1000'; // Ensure it's above everything
+        // Get actual dimensions
+        // Note: After appending to body, dimensions might slightly change if CSS relied on parent percentages.
+        // But .btn has mostly fixed padding/font.
+        const width = noBtn.offsetWidth;
+        const height = noBtn.offsetHeight;
+        // Safety margin from screen edges
+        const margin = 30;
+        // Calculate available area
+        const maxLeft = window.innerWidth - width - margin;
+        const maxTop = window.innerHeight - height - margin;
+        // Ensure purely positive ranges within the screen
+        // Random X between [margin] and [maxLeft]
+        const randomX = Math.max(margin, Math.random() * (maxLeft - margin) + margin);
+        // Random Y between [margin] and [maxTop]
+        const randomY = Math.max(margin, Math.random() * (maxTop - margin) + margin);
+        // Apply coordinates
+        noBtn.style.left = `${randomX}px`;
+        noBtn.style.top = `${randomY}px`;
+        // Add smoothing
+        noBtn.style.transition = 'all 0.3s ease-out';
+    }
+    // Interaction listeners for evasion
+    noBtn.addEventListener('mouseover', moveBtn);
+    // Handle touch/click for mobile or persistent users
+    noBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // Don't register a "click"
+        moveBtn(e);
+    });
+    // "Yes" button interaction
+    yesBtn.addEventListener('click', () => {
+        // Hide No button (wherever it is)
+        noBtn.style.display = 'none';
+        // Explode confetti
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ff4d6d', '#ff758f', '#ffffff']
+        });
+        // Hide main card, show success message
+        mainCard.style.display = 'none';
+        successMessage.classList.remove('hidden');
+        // Continuous confetti for celebration
+        let duration = 3 * 1000;
+        let animationEnd = Date.now() + duration;
+        let skew = 1;
+        (function frame() {
+            let timeLeft = animationEnd - Date.now();
+            let ticks = Math.max(0, 500 - timeLeft);
+            if (timeLeft <= 0) return;
+            skew = Math.max(0.8, skew - 0.001);
+            confetti({
+                particleCount: 3,
+                startVelocity: 0,
+                ticks: ticks,
+                origin: {
+                    x: Math.random(),
+                    y: (Math.random() * skew) - 0.2
+                },
+                colors: ['#ff4d6d', '#ff758f', '#ffffff'],
+                shapes: ['heart'],
+                disableForReducedMotion: true
+            });
+            requestAnimationFrame(frame);
+        }());
+    });
+});
